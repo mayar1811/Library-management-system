@@ -3,7 +3,7 @@
     agent any
     environment {
         DOCKER_CREDENTIALS_ID = 'mayar-docker-hub-credentials'
-        DOCKER_IMAGE = 'library_app'
+        DOCKER_IMAGE = 'library_web'
         DOCKER_TAG = 'latest'
         DOCKER_HUB_REPO = 'library_management_system_V1' // Docker Hub username or organization
     }
