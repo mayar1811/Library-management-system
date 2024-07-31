@@ -4,8 +4,8 @@ pipeline {
     environment {
         DOCKER_IMAGE = 'my-flask-app'
         DOCKER_CREDENTIALS = 'dockerhub-credentials'
-        KUBECONFIG_PATH = 'kubeconfig'
-        TERRAFORM_PATH = "${terraform}" 
+        KUBECONFIG_PATH = 'C:/Users/Dell/.kube/config' // Set path for kubeconfig
+        TERRAFORM_PATH = "C:\\terraform\\terraform_1.9.3_windows_amd64" 
         AWS_CREDENTIALS = 'aws-credentials'
     }
 
@@ -14,7 +14,6 @@ pipeline {
         buildDiscarder(logRotator(numToKeepStr: '10')) // Keep only the last 10 builds
     }
 
-   
     triggers {
         githubPush() // Trigger the job when there is a push to GitHub
     }
@@ -56,8 +55,8 @@ pipeline {
             steps {
                 script {
                     def kubeconfig = bat(script: "${env.TERRAFORM_PATH}\\terraform output -raw kubeconfig", returnStdout: true).trim()
-                    writeFile file: "${KUBECONFIG_PATH}", text: kubeconfig
-                    env.KUBECONFIG = "${env.WORKSPACE}\\${KUBECONFIG_PATH}"
+                    writeFile file: "${env.KUBECONFIG_PATH}", text: kubeconfig
+                    env.KUBECONFIG = "${env.KUBECONFIG_PATH}"
                     echo "KUBECONFIG is set to ${env.KUBECONFIG}"
                 }
             }
@@ -70,7 +69,7 @@ pipeline {
                 }
             }
         }
-       stage('Test Docker Image') {
+        stage('Test Docker Image') {
             steps {
                 script {
                     echo 'Running tests...'
