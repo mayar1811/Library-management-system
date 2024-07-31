@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         DOCKER_IMAGE = 'my-flask-app'
-        DOCKER_CREDENTIALS = 'Docker credentials'
+        DOCKER_CREDENTIALS = 'dockerhub-credentials'
     }
 
     options {
