@@ -4,6 +4,12 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
+variable "aws_profile" {
+  description = "AWS profile"
+  type        = string
+  default     = "MayarHossam"
+}
+
 variable "resource_prefix" {
   description = "Prefix used for naming infrastructure components."
   type        = string
