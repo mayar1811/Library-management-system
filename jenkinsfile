@@ -37,8 +37,8 @@ pipeline {
                         withCredentials([usernamePassword(credentialsId: "${AWS_CREDENTIALS}", passwordVariable: 'AWS_SECRET_KEY', usernameVariable: 'AWS_ACCESS_KEY')]) {
                             env.AWS_ACCESS_KEY_ID = "${AWS_ACCESS_KEY}"
                             env.AWS_SECRET_ACCESS_KEY = "${AWS_SECRET_KEY}"
-                            env.AWS_PROFILE = "${AWS_PROFILE}" // Ensure AWS_PROFILE is set
-                            bat "${env.TERRAFORM_PATH}\\terraform init"
+                            env.AWS_PROFILE = "${AWS_PROFILE}"
+                            bat "set AWS_PROFILE=${env.AWS_PROFILE} && ${env.TERRAFORM_PATH}\\terraform init"
                         }
                     }
                 }
@@ -51,8 +51,8 @@ pipeline {
                         withCredentials([usernamePassword(credentialsId: "${AWS_CREDENTIALS}", passwordVariable: 'AWS_SECRET_KEY', usernameVariable: 'AWS_ACCESS_KEY')]) {
                             env.AWS_ACCESS_KEY_ID = "${AWS_ACCESS_KEY}"
                             env.AWS_SECRET_ACCESS_KEY = "${AWS_SECRET_KEY}"
-                            env.AWS_PROFILE = "${AWS_PROFILE}" // Ensure AWS_PROFILE is set
-                            bat "${env.TERRAFORM_PATH}\\terraform apply -auto-approve"
+                            env.AWS_PROFILE = "${AWS_PROFILE}"
+                            bat "set AWS_PROFILE=${env.AWS_PROFILE} && ${env.TERRAFORM_PATH}\\terraform apply -auto-approve"
                         }
                     }
                 }
