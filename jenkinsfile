@@ -6,7 +6,7 @@ pipeline {
         DOCKER_CREDENTIALS = 'dockerhub-credentials'
         KUBECONFIG_PATH = 'C:\\Users\\Dell\\.kube\\config'
         TERRAFORM_PATH = 'C:\\terraform\\terraform_1.9.3_windows_amd64'
-        AWS_CREDENTIALS = 'aws-credentials'
+        AWS_CREDENTIALS = 'aws-credentials' // Ensure this ID matches your AWS credentials in Jenkins
     }
 
     options {
@@ -35,14 +35,7 @@ pipeline {
                 dir('C:\\Users\\Dell\\my-terraform-project') {
                     script {
                         echo "Initializing Terraform..."
-                        withCredentials([usernamePassword(credentialsId: "${AWS_CREDENTIALS}", passwordVariable: 'AWS_SECRET_KEY', usernameVariable: 'AWS_ACCESS_KEY')]) {
-                            env.AWS_ACCESS_KEY_ID = "${AWS_ACCESS_KEY}"
-                            env.AWS_SECRET_ACCESS_KEY = "${AWS_SECRET_KEY}"
-                            echo "Terraform Path: ${env.TERRAFORM_PATH}"
-                            echo "Current Directory: ${pwd()}"
-                            bat "dir ${env.TERRAFORM_PATH}"
-                            bat "echo AWS Access Key: ${env.AWS_ACCESS_KEY_ID}"
-                            bat "echo AWS Secret Key: ${env.AWS_SECRET_ACCESS_KEY}"
+                        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: "${AWS_CREDENTIALS"}]]) {
                             bat "${env.TERRAFORM_PATH}\\terraform init"
                         }
                     }
@@ -54,9 +47,7 @@ pipeline {
                 dir('C:\\Users\\Dell\\my-terraform-project') {
                     script {
                         echo "Applying Terraform configuration..."
-                        withCredentials([usernamePassword(credentialsId: "${AWS_CREDENTIALS}", passwordVariable: 'AWS_SECRET_KEY', usernameVariable: 'AWS_ACCESS_KEY')]) {
-                            env.AWS_ACCESS_KEY_ID = "${AWS_ACCESS_KEY}"
-                            env.AWS_SECRET_ACCESS_KEY = "${AWS_SECRET_KEY}"
+                        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: "${AWS_CREDENTIALS"}]]) {
                             bat "${env.TERRAFORM_PATH}\\terraform apply -auto-approve"
                         }
                     }
@@ -69,7 +60,6 @@ pipeline {
                     script {
                         echo "Configuring kubeconfig..."
                         def kubeconfig = bat(script: "${env.TERRAFORM_PATH}\\terraform output -raw kubeconfig", returnStdout: true).trim()
-                        echo "Kubeconfig Output: ${kubeconfig}"
                         writeFile file: "${KUBECONFIG_PATH}", text: kubeconfig
                         env.KUBECONFIG = "${KUBECONFIG_PATH}"
                         echo "KUBECONFIG is set to ${env.KUBECONFIG}"
