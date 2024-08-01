@@ -7,7 +7,6 @@ pipeline {
         KUBECONFIG_PATH = 'C:\\Users\\Dell\\.kube\\config'
         TERRAFORM_PATH = 'C:\\terraform\\terraform_1.9.3_windows_amd64'
         AWS_CREDENTIALS = 'aws-credentials'
-        AWS_PROFILE = 'MayarHossam'
     }
 
     options {
