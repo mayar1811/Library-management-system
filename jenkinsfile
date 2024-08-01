@@ -2,138 +2,118 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = 'my-flask-app'
+        DOCKER_IMAGE = 'mayaremam/library_management_system(flask)'
         DOCKER_CREDENTIALS = 'dockerhub-credentials'
         KUBECONFIG_PATH = 'C:\\Users\\Dell\\.kube\\config'
-        TERRAFORM_PATH = 'C:\\terraform\\terraform_1.9.3_windows_amd64'
-        AWS_CREDENTIALS = 'aws-credentials'
+        TERRAFORM_EXEC_PATH = 'C:\\terraform\\terraform_1.9.3_windows_amd64'
+        TERRAFORM_CONFIG_PATH = 'C:\\Users\\Dell\\my-terraform-project'
+        AWS_CLI_PATH = 'C:\\Program Files\\Amazon\\AWSCLIV2\\aws.exe'
+        KUBECTL_PATH = 'C:\\tools\\kubectl.exe' // Ensure this is correct
+        NAMESPACE = 'team6'
     }
 
     options {
-        timeout(time: 1, unit: 'HOURS') // Set build timeout to 1 hour
-        buildDiscarder(logRotator(numToKeepStr: '10')) // Keep only the last 10 builds
-    }
-
-    triggers {
-        githubPush() // Trigger the job when there is a push to GitHub
+        timeout(time: 1, unit: 'HOURS')
+        buildDiscarder(logRotator(numToKeepStr: '10'))
     }
 
     stages {
-        stage('Prepare') {
-            steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
-                        env.DOCKER_REPO = "${DOCKER_USERNAME}/${DOCKER_IMAGE}"
-                        echo "Using Docker Hub repository: ${DOCKER_REPO}"
+        stage('CI: Build and Test') {
+            stages {
+                stage('Setup AWS CLI') {
+                    steps {
+                        withCredentials([usernamePassword(credentialsId: 'aws-credentials', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                            bat """
+                            "${env.AWS_CLI_PATH}" configure set aws_access_key_id %AWS_ACCESS_KEY_ID% --profile MayarHossam
+                            "${env.AWS_CLI_PATH}" configure set aws_secret_access_key %AWS_SECRET_ACCESS_KEY% --profile MayarHossam
+                            "${env.AWS_CLI_PATH}" configure set region us-east-1 --profile MayarHossam
+                            """
+                        }
                     }
                 }
-            }
-        }
-        stage('Terraform Init') {
-            steps {
-                dir('C:\\Users\\Dell\\my-terraform-project') {
-                    script {
-                        withCredentials([usernamePassword(credentialsId: "${AWS_CREDENTIALS}", passwordVariable: 'AWS_SECRET_KEY', usernameVariable: 'AWS_ACCESS_KEY')]) {
-                            env.AWS_ACCESS_KEY_ID = "${AWS_ACCESS_KEY}"
-                            env.AWS_SECRET_ACCESS_KEY = "${AWS_SECRET_KEY}"
-                            bat "${env.TERRAFORM_PATH}\\terraform init"
+
+                stage('Build Docker Image') {
+                    steps {
+                        script {
+                            echo "Building Docker image ${DOCKER_IMAGE}:${env.BUILD_NUMBER}"
+                            bat "docker build -t ${DOCKER_IMAGE}:${env.BUILD_NUMBER} ."
                         }
                     }
                 }
             }
         }
-        stage('Terraform Apply') {
-            steps {
-                dir('C:\\Users\\Dell\\my-terraform-project') {
-                    script {
-                        withCredentials([usernamePassword(credentialsId: "${AWS_CREDENTIALS}", passwordVariable: 'AWS_SECRET_KEY', usernameVariable: 'AWS_ACCESS_KEY')]) {
-                            env.AWS_ACCESS_KEY_ID = "${AWS_ACCESS_KEY}"
-                            env.AWS_SECRET_ACCESS_KEY = "${AWS_SECRET_KEY}"
-                            bat "${env.TERRAFORM_PATH}\\terraform apply -auto-approve"
+
+        stage('CD: Deploy') {
+            stages {
+                stage('Terraform Init and Apply') {
+                    steps {
+                        dir("${env.TERRAFORM_CONFIG_PATH}") {
+                            bat """
+                            set AWS_PROFILE=MayarHossam
+                            "${env.TERRAFORM_EXEC_PATH}" init
+                            "${env.TERRAFORM_EXEC_PATH}" apply -auto-approve
+                            """
                         }
                     }
                 }
-            }
-        }
-        stage('Configure Kubeconfig') {
-            steps {
-                dir('C:\\Users\\Dell\\my-terraform-project') {
-                    script {
-                        def kubeconfig = bat(script: "${env.TERRAFORM_PATH}\\terraform output -raw kubeconfig", returnStdout: true).trim()
-                        writeFile file: "${KUBECONFIG_PATH}", text: kubeconfig
-                        env.KUBECONFIG = "${KUBECONFIG_PATH}"
-                        echo "KUBECONFIG is set to ${env.KUBECONFIG}"
+
+                stage('Extract EKS Cluster Name') {
+                    steps {
+                        script {
+                            dir("${env.TERRAFORM_CONFIG_PATH}") {
+                                env.EKS_CLUSTER_NAME = bat(script: """
+                                    @echo off
+                                    "${env.TERRAFORM_EXEC_PATH}" output -raw eks_cluster_name
+                                """, returnStdout: true).trim()
+                                echo "EKS Cluster Name is set to ${env.EKS_CLUSTER_NAME}"
+                            }
+                        }
                     }
                 }
-            }
-        }
-        stage('Build') {
-            steps {
-                script {
-                    echo "Building Docker image ${DOCKER_REPO}:${env.BUILD_NUMBER}"
-                    docker.build("${DOCKER_REPO}:${env.BUILD_NUMBER}")
-                }
-            }
-        }
-        stage('Test Docker Image') {
-            steps {
-                script {
-                    echo 'Running tests...'
-                    // Implement your test logic here
-                    echo 'Tests passed!'
-                }
-            }
-        }
-        stage('Push Docker Image') {
-            steps {
-                script {
-                    echo "Pushing Docker image ${DOCKER_REPO}:${env.BUILD_NUMBER}"
-                    docker.withRegistry('https://index.docker.io/v1/', "${DOCKER_CREDENTIALS}") {
-                        docker.image("${DOCKER_REPO}:${env.BUILD_NUMBER}").push()
+
+                stage('Configure Kubeconfig') {
+                    steps {
+                        script {
+                            echo "Configuring kubeconfig for EKS Cluster: ${env.EKS_CLUSTER_NAME}"
+                            bat """
+                                "${env.AWS_CLI_PATH}" eks update-kubeconfig --region us-east-1 --name "${env.EKS_CLUSTER_NAME}" --kubeconfig "${env.KUBECONFIG_PATH}" --profile MayarHossam
+                            """
+                            env.KUBECONFIG = "${env.KUBECONFIG_PATH}"
+                            echo "KUBECONFIG is set to ${env.KUBECONFIG}"
+                        }
                     }
                 }
-            }
-        }
-        stage('Deploy to Kubernetes') {
-            steps {
-                script {
-                    echo "Deploying Docker image to Kubernetes"
-                    bat """
-                    kubectl apply -f - <<EOF
-                    apiVersion: apps/v1
-                    kind: Deployment
-                    metadata:
-                      name: library-app-deployment
-                    spec:
-                      replicas: 2
-                      selector:
-                        matchLabels:
-                          app: library-app
-                      template:
-                        metadata:
-                          labels:
-                            app: library-app
-                        spec:
-                          containers:
-                          - name: library-app
-                            image: ${DOCKER_REPO}:${env.BUILD_NUMBER}
-                            ports:
-                            - containerPort: 5000
-                    ---
-                    apiVersion: v1
-                    kind: Service
-                    metadata:
-                      name: library-app-service
-                    spec:
-                      selector:
-                        app: library-app
-                      ports:
-                      - protocol: TCP
-                        port: 80
-                        targetPort: 5000
-                      type: LoadBalancer
-                    EOF
-                    """
+
+                stage('Push Docker Image') {
+                    steps {
+                        script {
+                            echo "Pushing Docker image ${DOCKER_IMAGE}:${env.BUILD_NUMBER}"
+                            withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+                                bat """
+                                echo Logging into Docker Hub...
+                                docker login -u %DOCKER_USERNAME% -p %DOCKER_PASSWORD%
+                                docker tag ${DOCKER_IMAGE}:${env.BUILD_NUMBER} ${DOCKER_IMAGE}:latest
+                                docker push ${DOCKER_IMAGE}:${env.BUILD_NUMBER}
+                                docker push ${DOCKER_IMAGE}:latest
+                                """
+                            }
+                        }
+                    }
+                }
+
+                stage('Deploy to Kubernetes') {
+                    steps {
+                        script {
+                            echo "Deploying to Kubernetes namespace: ${NAMESPACE}"
+                            bat """
+                                "${env.KUBECTL_PATH}" create namespace ${NAMESPACE} --dry-run=client -o yaml | "${env.KUBECTL_PATH}" apply -f -
+                                "${env.KUBECTL_PATH}" apply -f ${env.WORKSPACE}\\k8s\\persistent-volume.yaml -n ${NAMESPACE}
+                                "${env.KUBECTL_PATH}" apply -f ${env.WORKSPACE}\\k8s\\persistent-volume-claim.yaml -n ${NAMESPACE}
+                                "${env.KUBECTL_PATH}" apply -f ${env.WORKSPACE}\\k8s\\deployment.yaml -n ${NAMESPACE}
+                                "${env.KUBECTL_PATH}" apply -f ${env.WORKSPACE}\\k8s\\service.yaml -n ${NAMESPACE}
+                            """
+                        }
+                    }
                 }
             }
         }
@@ -141,20 +121,13 @@ pipeline {
 
     post {
         success {
-            script {
-                echo 'Build, test, and deployment completed successfully.'
-            }
+            echo 'CI/CD pipeline completed successfully.'
         }
         failure {
-            script {
-                echo 'Build, test, or deployment failed.'
-            }
+            echo 'CI/CD pipeline failed.'
         }
         always {
-            script {
-                echo 'Cleaning up...'
-                // Perform any cleanup steps if necessary
-            }
+            echo 'Cleaning up...'
         }
     }
 }
