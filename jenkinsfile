@@ -7,6 +7,7 @@ pipeline {
         KUBECONFIG_PATH = 'C:\\Users\\Dell\\.kube\\config'
         TERRAFORM_PATH = 'C:\\terraform\\terraform_1.9.3_windows_amd64'
         AWS_CREDENTIALS = 'aws-credentials'
+        AWS_PROFILE = 'MayarHossam'
     }
 
     options {
@@ -36,6 +37,7 @@ pipeline {
                         withCredentials([usernamePassword(credentialsId: "${AWS_CREDENTIALS}", passwordVariable: 'AWS_SECRET_KEY', usernameVariable: 'AWS_ACCESS_KEY')]) {
                             env.AWS_ACCESS_KEY_ID = "${AWS_ACCESS_KEY}"
                             env.AWS_SECRET_ACCESS_KEY = "${AWS_SECRET_KEY}"
+                            env.AWS_PROFILE = "${AWS_PROFILE}" // Ensure AWS_PROFILE is set
                             bat "${env.TERRAFORM_PATH}\\terraform init"
                         }
                     }
@@ -49,6 +51,7 @@ pipeline {
                         withCredentials([usernamePassword(credentialsId: "${AWS_CREDENTIALS}", passwordVariable: 'AWS_SECRET_KEY', usernameVariable: 'AWS_ACCESS_KEY')]) {
                             env.AWS_ACCESS_KEY_ID = "${AWS_ACCESS_KEY}"
                             env.AWS_SECRET_ACCESS_KEY = "${AWS_SECRET_KEY}"
+                            env.AWS_PROFILE = "${AWS_PROFILE}" // Ensure AWS_PROFILE is set
                             bat "${env.TERRAFORM_PATH}\\terraform apply -auto-approve"
                         }
                     }
