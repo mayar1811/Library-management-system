@@ -6,8 +6,8 @@ pipeline {
         DOCKER_CREDENTIALS = 'dockerhub-credentials'
         KUBECONFIG_PATH = 'C:\\Users\\Dell\\.kube\\config'
         TERRAFORM_PATH = 'C:\\terraform\\terraform_1.9.3_windows_amd64'
-        AWS_CREDENTIALS = 'aws-credentials'
-        AWS_PROFILE = 'MayarHossam' // Adjust if necessary
+        AWS_ACCESS_KEY_ID = credentials('aws-access-key-id') // Use Jenkins credentials
+        AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key') // Use Jenkins credentials
     }
 
     options {
@@ -34,11 +34,7 @@ pipeline {
             steps {
                 dir('C:\\Users\\Dell\\my-terraform-project') {
                     script {
-                        withCredentials([usernamePassword(credentialsId: "${AWS_CREDENTIALS}", passwordVariable: 'AWS_SECRET_KEY', usernameVariable: 'AWS_ACCESS_KEY')]) {
-                            env.AWS_ACCESS_KEY_ID = "${AWS_ACCESS_KEY}"
-                            env.AWS_SECRET_ACCESS_KEY = "${AWS_SECRET_KEY}"
-                            bat "${env.TERRAFORM_PATH}\\terraform init"
-                        }
+                        bat "${env.TERRAFORM_PATH}\\terraform init"
                     }
                 }
             }
@@ -47,15 +43,11 @@ pipeline {
             steps {
                 dir('C:\\Users\\Dell\\my-terraform-project') {
                     script {
-                        withCredentials([usernamePassword(credentialsId: "${AWS_CREDENTIALS}", passwordVariable: 'AWS_SECRET_KEY', usernameVariable: 'AWS_ACCESS_KEY')]) {
-                            env.AWS_ACCESS_KEY_ID = "${AWS_ACCESS_KEY}"
-                            env.AWS_SECRET_ACCESS_KEY = "${AWS_SECRET_KEY}"
-                            bat """
-                            set AWS_ACCESS_KEY_ID=${env.AWS_ACCESS_KEY_ID}
-                            set AWS_SECRET_ACCESS_KEY=${env.AWS_SECRET_ACCESS_KEY}
-                            ${env.TERRAFORM_PATH}\\terraform apply -auto-approve
-                            """
-                        }
+                        bat """
+                        set AWS_ACCESS_KEY_ID=${env.AWS_ACCESS_KEY_ID}
+                        set AWS_SECRET_ACCESS_KEY=${env.AWS_SECRET_ACCESS_KEY}
+                        ${env.TERRAFORM_PATH}\\terraform apply -auto-approve
+                        """
                     }
                 }
             }
