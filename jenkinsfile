@@ -31,19 +31,25 @@ pipeline {
             }
         }
         stage('Terraform Init') {
-            steps {
-                dir('C:\\Users\\Dell\\my-terraform-project') {
-                    script {
-                        echo "Initializing Terraform..."
-                        withCredentials([usernamePassword(credentialsId: "${AWS_CREDENTIALS}", passwordVariable: 'AWS_SECRET_KEY', usernameVariable: 'AWS_ACCESS_KEY')]) {
-                            env.AWS_ACCESS_KEY_ID = "${AWS_ACCESS_KEY}"
-                            env.AWS_SECRET_ACCESS_KEY = "${AWS_SECRET_KEY}"
-                            bat "${env.TERRAFORM_PATH}\\terraform init"
-                        }
-                    }
+    steps {
+        dir('C:\\Users\\Dell\\my-terraform-project') {
+            script {
+                echo "Initializing Terraform..."
+                withCredentials([usernamePassword(credentialsId: "${AWS_CREDENTIALS}", passwordVariable: 'AWS_SECRET_KEY', usernameVariable: 'AWS_ACCESS_KEY')]) {
+                    env.AWS_ACCESS_KEY_ID = "${AWS_ACCESS_KEY}"
+                    env.AWS_SECRET_ACCESS_KEY = "${AWS_SECRET_KEY}"
+                    bat "echo Current Directory: %CD%"
+                    bat "echo Terraform Path: ${env.TERRAFORM_PATH}"
+                    bat "dir ${env.TERRAFORM_PATH}"
+                    bat "echo AWS Access Key: ${AWS_ACCESS_KEY_ID}"
+                    bat "echo AWS Secret Key: ${AWS_SECRET_ACCESS_KEY}"
+                    bat "${env.TERRAFORM_PATH}\\terraform init"
                 }
             }
         }
+    }
+}
+
         stage('Terraform Apply') {
             steps {
                 dir('C:\\Users\\Dell\\my-terraform-project') {
