@@ -6,7 +6,7 @@ pipeline {
         DOCKER_CREDENTIALS = 'dockerhub-credentials'
         KUBECONFIG_PATH = 'C:\\Users\\Dell\\.kube\\config'
         TERRAFORM_PATH = 'C:\\terraform\\terraform_1.9.3_windows_amd64'
-        AWS_CREDENTIALS = 'aws-credentials' // Ensure this ID matches your AWS credentials in Jenkins
+        AWS_CREDENTIALS = 'aws-credentials'
     }
 
     options {
