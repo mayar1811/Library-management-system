@@ -34,9 +34,9 @@ pipeline {
                 dir('C:\\Users\\Dell\\my-terraform-project') {
                     script {
                         withCredentials([usernamePassword(credentialsId: "${AWS_CREDENTIALS}", passwordVariable: 'AWS_SECRET_KEY', usernameVariable: 'AWS_ACCESS_KEY')]) {
-                            withEnv(["AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY}", "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_KEY}", "AWS_PROFILE=MayarHossam"]) {
-                                bat "${env.TERRAFORM_PATH}\\terraform init"
-                            }
+                            env.AWS_ACCESS_KEY_ID = "${AWS_ACCESS_KEY}"
+                            env.AWS_SECRET_ACCESS_KEY = "${AWS_SECRET_KEY}"
+                            bat "${env.TERRAFORM_PATH}\\terraform init"
                         }
                     }
                 }
@@ -47,9 +47,9 @@ pipeline {
                 dir('C:\\Users\\Dell\\my-terraform-project') {
                     script {
                         withCredentials([usernamePassword(credentialsId: "${AWS_CREDENTIALS}", passwordVariable: 'AWS_SECRET_KEY', usernameVariable: 'AWS_ACCESS_KEY')]) {
-                            withEnv(["AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY}", "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_KEY}", "AWS_PROFILE=MayarHossam"]) {
-                                bat "${env.TERRAFORM_PATH}\\terraform apply -auto-approve"
-                            }
+                            env.AWS_ACCESS_KEY_ID = "${AWS_ACCESS_KEY}"
+                            env.AWS_SECRET_ACCESS_KEY = "${AWS_SECRET_KEY}"
+                            bat "${env.TERRAFORM_PATH}\\terraform apply -auto-approve"
                         }
                     }
                 }
