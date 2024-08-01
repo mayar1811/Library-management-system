@@ -6,8 +6,7 @@ pipeline {
         DOCKER_CREDENTIALS = 'dockerhub-credentials'
         KUBECONFIG_PATH = 'C:\\Users\\Dell\\.kube\\config'
         TERRAFORM_PATH = 'C:\\terraform\\terraform_1.9.3_windows_amd64'
-        AWS_CREDENTIALS_FILE = 'C:\\Users\\Dell\\.aws\\credentials'
-        AWS_PROFILE = 'MayarHossam'
+        AWS_CREDENTIALS = 'aws-credentials'
     }
 
     options {
@@ -37,11 +36,7 @@ pipeline {
                         withCredentials([usernamePassword(credentialsId: "${AWS_CREDENTIALS}", passwordVariable: 'AWS_SECRET_KEY', usernameVariable: 'AWS_ACCESS_KEY')]) {
                             env.AWS_ACCESS_KEY_ID = "${AWS_ACCESS_KEY}"
                             env.AWS_SECRET_ACCESS_KEY = "${AWS_SECRET_KEY}"
-                            bat """
-                            set AWS_PROFILE=${env.AWS_PROFILE}
-                            set AWS_SHARED_CREDENTIALS_FILE=${env.AWS_CREDENTIALS_FILE}
-                            ${env.TERRAFORM_PATH}\\terraform init
-                            """
+                            bat "${env.TERRAFORM_PATH}\\terraform init"
                         }
                     }
                 }
@@ -54,11 +49,7 @@ pipeline {
                         withCredentials([usernamePassword(credentialsId: "${AWS_CREDENTIALS}", passwordVariable: 'AWS_SECRET_KEY', usernameVariable: 'AWS_ACCESS_KEY')]) {
                             env.AWS_ACCESS_KEY_ID = "${AWS_ACCESS_KEY}"
                             env.AWS_SECRET_ACCESS_KEY = "${AWS_SECRET_KEY}"
-                            bat """
-                            set AWS_PROFILE=${env.AWS_PROFILE}
-                            set AWS_SHARED_CREDENTIALS_FILE=${env.AWS_CREDENTIALS_FILE}
-                            ${env.TERRAFORM_PATH}\\terraform apply -auto-approve
-                            """
+                            bat "${env.TERRAFORM_PATH}\\terraform apply -auto-approve"
                         }
                     }
                 }
