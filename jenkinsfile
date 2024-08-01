@@ -22,7 +22,7 @@ pipeline {
         stage('Prepare') {
             steps {
                 script {
-                    echo "Preparing environment..."
+                    echo "Preparing Docker credentials..."
                     withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
                         env.DOCKER_REPO = "${DOCKER_USERNAME}/${DOCKER_IMAGE}"
                         echo "Using Docker Hub repository: ${DOCKER_REPO}"
@@ -31,25 +31,24 @@ pipeline {
             }
         }
         stage('Terraform Init') {
-    steps {
-        dir('C:\\Users\\Dell\\my-terraform-project') {
-            script {
-                echo "Initializing Terraform..."
-                withCredentials([usernamePassword(credentialsId: "${AWS_CREDENTIALS}", passwordVariable: 'AWS_SECRET_KEY', usernameVariable: 'AWS_ACCESS_KEY')]) {
-                    env.AWS_ACCESS_KEY_ID = "${AWS_ACCESS_KEY}"
-                    env.AWS_SECRET_ACCESS_KEY = "${AWS_SECRET_KEY}"
-                    bat "echo Current Directory: %CD%"
-                    bat "echo Terraform Path: ${env.TERRAFORM_PATH}"
-                    bat "dir ${env.TERRAFORM_PATH}"
-                    bat "echo AWS Access Key: ${AWS_ACCESS_KEY_ID}"
-                    bat "echo AWS Secret Key: ${AWS_SECRET_ACCESS_KEY}"
-                    bat "${env.TERRAFORM_PATH}\\terraform init"
+            steps {
+                dir('C:\\Users\\Dell\\my-terraform-project') {
+                    script {
+                        echo "Initializing Terraform..."
+                        withCredentials([usernamePassword(credentialsId: "${AWS_CREDENTIALS}", passwordVariable: 'AWS_SECRET_KEY', usernameVariable: 'AWS_ACCESS_KEY')]) {
+                            env.AWS_ACCESS_KEY_ID = "${AWS_ACCESS_KEY}"
+                            env.AWS_SECRET_ACCESS_KEY = "${AWS_SECRET_KEY}"
+                            echo "Terraform Path: ${env.TERRAFORM_PATH}"
+                            echo "Current Directory: ${pwd()}"
+                            bat "dir ${env.TERRAFORM_PATH}"
+                            bat "echo AWS Access Key: ${env.AWS_ACCESS_KEY_ID}"
+                            bat "echo AWS Secret Key: ${env.AWS_SECRET_ACCESS_KEY}"
+                            bat "${env.TERRAFORM_PATH}\\terraform init"
+                        }
+                    }
                 }
             }
         }
-    }
-}
-
         stage('Terraform Apply') {
             steps {
                 dir('C:\\Users\\Dell\\my-terraform-project') {
@@ -68,8 +67,9 @@ pipeline {
             steps {
                 dir('C:\\Users\\Dell\\my-terraform-project') {
                     script {
-                        echo "Configuring Kubeconfig..."
+                        echo "Configuring kubeconfig..."
                         def kubeconfig = bat(script: "${env.TERRAFORM_PATH}\\terraform output -raw kubeconfig", returnStdout: true).trim()
+                        echo "Kubeconfig Output: ${kubeconfig}"
                         writeFile file: "${KUBECONFIG_PATH}", text: kubeconfig
                         env.KUBECONFIG = "${KUBECONFIG_PATH}"
                         echo "KUBECONFIG is set to ${env.KUBECONFIG}"
