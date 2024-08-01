@@ -34,15 +34,9 @@ pipeline {
                 dir('C:\\Users\\Dell\\my-terraform-project') {
                     script {
                         withCredentials([usernamePassword(credentialsId: "${AWS_CREDENTIALS}", passwordVariable: 'AWS_SECRET_KEY', usernameVariable: 'AWS_ACCESS_KEY')]) {
-                            env.AWS_ACCESS_KEY_ID = "${AWS_ACCESS_KEY}"
-                            env.AWS_SECRET_ACCESS_KEY = "${AWS_SECRET_KEY}"
-                            env.AWS_PROFILE = "MayarHossam" // Ensure this is set correctly
-                            bat """
-                            echo AWS_PROFILE=${env.AWS_PROFILE}
-                            echo AWS_ACCESS_KEY_ID=${env.AWS_ACCESS_KEY_ID}
-                            echo AWS_SECRET_ACCESS_KEY=${env.AWS_SECRET_ACCESS_KEY}
-                            ${env.TERRAFORM_PATH}\\terraform init
-                            """
+                            withEnv(["AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY}", "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_KEY}", "AWS_PROFILE=MayarHossam"]) {
+                                bat "${env.TERRAFORM_PATH}\\terraform init"
+                            }
                         }
                     }
                 }
@@ -53,15 +47,9 @@ pipeline {
                 dir('C:\\Users\\Dell\\my-terraform-project') {
                     script {
                         withCredentials([usernamePassword(credentialsId: "${AWS_CREDENTIALS}", passwordVariable: 'AWS_SECRET_KEY', usernameVariable: 'AWS_ACCESS_KEY')]) {
-                            env.AWS_ACCESS_KEY_ID = "${AWS_ACCESS_KEY}"
-                            env.AWS_SECRET_ACCESS_KEY = "${AWS_SECRET_KEY}"
-                            env.AWS_PROFILE = "MayarHossam" // Ensure this is set correctly
-                            bat """
-                            echo AWS_PROFILE=${env.AWS_PROFILE}
-                            echo AWS_ACCESS_KEY_ID=${env.AWS_ACCESS_KEY_ID}
-                            echo AWS_SECRET_ACCESS_KEY=${env.AWS_SECRET_ACCESS_KEY}
-                            ${env.TERRAFORM_PATH}\\terraform apply -auto-approve
-                            """
+                            withEnv(["AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY}", "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_KEY}", "AWS_PROFILE=MayarHossam"]) {
+                                bat "${env.TERRAFORM_PATH}\\terraform apply -auto-approve"
+                            }
                         }
                     }
                 }
