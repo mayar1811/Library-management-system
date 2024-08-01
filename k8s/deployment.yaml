@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: library-app-deployment
-  namespace: mayar
+  namespace: team6
 spec:
   replicas: 2
   selector:
