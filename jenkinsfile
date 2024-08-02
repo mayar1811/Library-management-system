@@ -3,13 +3,13 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "${docker-image}"
+        DOCKER_IMAGE = '${docker-image}'
         DOCKER_CREDENTIALS = 'dockerhub-credentials'
-        KUBECONFIG_PATH = "${kubeconfig}"
+        KUBECONFIG_PATH = '${kubeconfig}'
         TERRAFORM_EXEC_PATH = '${terraform-exec}'
         TERRAFORM_CONFIG_PATH = '${terraform-config}'
-        AWS_CLI_PATH = "${aws-cli}"
-        KUBECTL_PATH = "${kubectl}" 
+        AWS_CLI_PATH = '${aws-cli}'
+        KUBECTL_PATH = '${kubectl}' 
         AWS_PROFILE = '${aws-profile}'
         NAMESPACE = '${namespace}'
     }
@@ -26,9 +26,9 @@ pipeline {
                     steps {
                         withCredentials([usernamePassword(credentialsId: 'aws-credentials', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
                             bat """
-                             "${env.AWS_CLI_PATH}" configure set aws_access_key_id %AWS_ACCESS_KEY_ID% --profile ${env.AWS_PROFILE}
-                             "${env.AWS_CLI_PATH}" configure set aws_secret_access_key %AWS_SECRET_ACCESS_KEY% --profile ${env.AWS_PROFILE}
-                             "${env.AWS_CLI_PATH}" configure set region us-east-1 --profile ${env.AWS_PROFILE}
+                            "${env.AWS_CLI_PATH}" configure set aws_access_key_id %AWS_ACCESS_KEY_ID% --profile ${env.AWS_PROFILE}
+                            "${env.AWS_CLI_PATH}" configure set aws_secret_access_key %AWS_SECRET_ACCESS_KEY% --profile ${env.AWS_PROFILE}
+                            "${env.AWS_CLI_PATH}" configure set region us-east-1 --profile ${env.AWS_PROFILE}
                             """
                         }
                     }
