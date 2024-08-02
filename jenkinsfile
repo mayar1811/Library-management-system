@@ -25,9 +25,9 @@ pipeline {
                     steps {
                         withCredentials([usernamePassword(credentialsId: 'aws-credentials', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
                             bat """
-                            "%AWS_CLI_PATH%" configure set aws_access_key_id %AWS_ACCESS_KEY_ID% --profile %AWS_PROFILE%
-                            "%AWS_CLI_PATH%" configure set aws_secret_access_key %AWS_SECRET_ACCESS_KEY% --profile %AWS_PROFILE%
-                            "%AWS_CLI_PATH%" configure set region us-east-1 --profile %AWS_PROFILE%
+                            "${env.AWS_CLI_PATH}" configure set aws_access_key_id %AWS_ACCESS_KEY_ID% --profile ${env.AWS_PROFILE}
+                            "${env.AWS_CLI_PATH}" configure set aws_secret_access_key %AWS_SECRET_ACCESS_KEY% --profile ${env.AWS_PROFILE}
+                            "${env.AWS_CLI_PATH}" configure set region us-east-1 --profile ${env.AWS_PROFILE}
                             """
                         }
                     }
@@ -36,8 +36,8 @@ pipeline {
                 stage('Build Docker Image') {
                     steps {
                         script {
-                            echo "Building Docker image %DOCKER_IMAGE%:%BUILD_NUMBER%"
-                            bat "docker build -t %DOCKER_IMAGE%:%BUILD_NUMBER% ."
+                            echo "Building Docker image ${env.DOCKER_IMAGE}:${env.BUILD_NUMBER}"
+                            bat "docker build -t ${env.DOCKER_IMAGE}:${env.BUILD_NUMBER} ."
                         }
                     }
                 }
@@ -48,11 +48,11 @@ pipeline {
             stages {
                 stage('Terraform Init and Apply') {
                     steps {
-                        dir("%TERRAFORM_CONFIG_PATH%") {
+                        dir("${env.TERRAFORM_CONFIG_PATH}") {
                             bat """
-                            set AWS_PROFILE=%AWS_PROFILE%
-                            "%TERRAFORM_EXEC_PATH%" init
-                            "%TERRAFORM_EXEC_PATH%" apply -auto-approve
+                            set AWS_PROFILE=${env.AWS_PROFILE}
+                            "${env.TERRAFORM_EXEC_PATH}" init
+                            "${env.TERRAFORM_EXEC_PATH}" apply -auto-approve
                             """
                         }
                     }
@@ -61,12 +61,12 @@ pipeline {
                 stage('Extract EKS Cluster Name') {
                     steps {
                         script {
-                            dir("%TERRAFORM_CONFIG_PATH%") {
+                            dir("${env.TERRAFORM_CONFIG_PATH}") {
                                 env.EKS_CLUSTER_NAME = bat(script: """
                                     @echo off
-                                    "%TERRAFORM_EXEC_PATH%" output -raw eks_cluster_name
+                                    "${env.TERRAFORM_EXEC_PATH}" output -raw eks_cluster_name
                                 """, returnStdout: true).trim()
-                                echo "EKS Cluster Name is set to %EKS_CLUSTER_NAME%"
+                                echo "EKS Cluster Name is set to ${env.EKS_CLUSTER_NAME}"
                             }
                         }
                     }
@@ -75,12 +75,12 @@ pipeline {
                 stage('Configure Kubeconfig') {
                     steps {
                         script {
-                            echo "Configuring kubeconfig for EKS Cluster: %EKS_CLUSTER_NAME%"
+                            echo "Configuring kubeconfig for EKS Cluster: ${env.EKS_CLUSTER_NAME}"
                             bat """
-                                "%AWS_CLI_PATH%" eks update-kubeconfig --region us-east-1 --name "%EKS_CLUSTER_NAME%" --kubeconfig "%KUBECONFIG_PATH%" --profile %AWS_PROFILE%
+                                "${env.AWS_CLI_PATH}" eks update-kubeconfig --region us-east-1 --name "${env.EKS_CLUSTER_NAME}" --kubeconfig "${env.KUBECONFIG_PATH}" --profile ${env.AWS_PROFILE}
                             """
-                            env.KUBECONFIG = "%KUBECONFIG_PATH%"
-                            echo "KUBECONFIG is set to %KUBECONFIG%"
+                            env.KUBECONFIG = "${env.KUBECONFIG_PATH}"
+                            echo "KUBECONFIG is set to ${env.KUBECONFIG}"
                         }
                     }
                 }
@@ -88,14 +88,14 @@ pipeline {
                 stage('Push Docker Image') {
                     steps {
                         script {
-                            echo "Pushing Docker image %DOCKER_IMAGE%:%BUILD_NUMBER%"
-                            withCredentials([usernamePassword(credentialsId: "%DOCKER_CREDENTIALS%", passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+                            echo "Pushing Docker image ${env.DOCKER_IMAGE}:${env.BUILD_NUMBER}"
+                            withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
                                 bat """
                                 echo Logging into Docker Hub...
                                 docker login -u %DOCKER_USERNAME% -p %DOCKER_PASSWORD%
-                                docker tag %DOCKER_IMAGE%:%BUILD_NUMBER% %DOCKER_IMAGE%:latest
-                                docker push %DOCKER_IMAGE%:%BUILD_NUMBER%
-                                docker push %DOCKER_IMAGE%:latest
+                                docker tag ${env.DOCKER_IMAGE}:${env.BUILD_NUMBER} ${env.DOCKER_IMAGE}:latest
+                                docker push ${env.DOCKER_IMAGE}:${env.BUILD_NUMBER}
+                                docker push ${env.DOCKER_IMAGE}:latest
                                 """
                             }
                         }
@@ -105,30 +105,9 @@ pipeline {
                 stage('Deploy to Kubernetes') {
                     steps {
                         script {
-                            echo "Deploying to Kubernetes namespace: %NAMESPACE%"
+                            echo "Deploying to Kubernetes namespace: ${env.NAMESPACE}"
                             bat """
-                                "%KUBECTL_PATH%" create namespace %NAMESPACE% --dry-run=client -o yaml | "%KUBECTL_PATH%" apply -f -
-                                "%KUBECTL_PATH%" apply -f %WORKSPACE%\\k8s\\persistent-volume.yaml -n %NAMESPACE%
-                                "%KUBECTL_PATH%" apply -f %WORKSPACE%\\k8s\\persistent-volume-claim.yaml -n %NAMESPACE%
-                                "%KUBECTL_PATH%" apply -f %WORKSPACE%\\k8s\\deployment.yaml -n %NAMESPACE%
-                                "%KUBECTL_PATH%" apply -f %WORKSPACE%\\k8s\\service.yaml -n %NAMESPACE%
-                            """
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    post {
-        success {
-            echo 'CI/CD pipeline completed successfully.'
-        }
-        failure {
-            echo 'CI/CD pipeline failed.'
-        }
-        always {
-            echo 'Cleaning up...'
-        }
-    }
-}
+                                "${env.KUBECTL_PATH}" create namespace ${env.NAMESPACE} --dry-run=client -o yaml | "${env.KUBECTL_PATH}" apply -f -
+                                "${env.KUBECTL_PATH}" apply -f ${env.WORKSPACE}\\k8s\\persistent-volume.yaml -n ${env.NAMESPACE}
+                                "${env.KUBECTL_PATH}" apply -f ${env.WORKSPACE}\\k8s\\persistent-volume-claim.yaml -n ${env.NAMESPACE}
+                                "${env.KUBECTL_PATH}" apply -f ${env.WORKSPACE}\\k8s\\
