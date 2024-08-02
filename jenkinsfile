@@ -3,9 +3,9 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = '${docker-image}'
+        DOCKER_IMAGE = "${docker-image}"
         DOCKER_CREDENTIALS = 'dockerhub-credentials'
-        KUBECONFIG_PATH = '${kubeconfig}'
+        KUBECONFIG_PATH = "${kubeconfig}"
         TERRAFORM_EXEC_PATH = '${terraform-exec}'
         TERRAFORM_CONFIG_PATH = '${terraform-config}'
         AWS_CLI_PATH = "${aws-cli}"
