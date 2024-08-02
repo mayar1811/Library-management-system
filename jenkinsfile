@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = '${docker-image}'
+        DOCKER_IMAGE = 'mayaremam/library-management-system'
         DOCKER_CREDENTIALS = 'dockerhub-credentials'
         KUBECONFIG_PATH = '${kubeconfig}'
         TERRAFORM_EXEC_PATH = '${terraform-exec}'
