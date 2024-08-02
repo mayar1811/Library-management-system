@@ -7,7 +7,7 @@ pipeline {
         KUBECONFIG_PATH = '${kubeconfig}'
         TERRAFORM_EXEC_PATH = '${terraform-exec}'
         TERRAFORM_CONFIG_PATH = '${terraform-config}'
-        AWS_CLI_PATH = '%aws-cli%'  // Use %aws-cli% here for Windows bat commands
+        AWS_CLI_PATH = '${aws-cli}' // Ensure this is the correct environment variable name
         KUBECTL_PATH = '${kubectl}' 
         AWS_PROFILE = '${aws-profile}'
         NAMESPACE = '${namespace}'
@@ -107,11 +107,11 @@ pipeline {
                         script {
                             echo "Deploying to Kubernetes namespace: ${env.NAMESPACE}"
                             bat """
-                                %KUBECTL_PATH% create namespace ${env.NAMESPACE} --dry-run=client -o yaml | %KUBECTL_PATH% apply -f -
-                                %KUBECTL_PATH% apply -f ${env.WORKSPACE}\\k8s\\persistent-volume.yaml -n ${env.NAMESPACE}
-                                %KUBECTL_PATH% apply -f ${env.WORKSPACE}\\k8s\\persistent-volume-claim.yaml -n ${env.NAMESPACE}
-                                %KUBECTL_PATH% apply -f ${env.WORKSPACE}\\k8s\\deployment.yaml -n ${env.NAMESPACE}
-                                %KUBECTL_PATH% apply -f ${env.WORKSPACE}\\k8s\\service.yaml -n ${env.NAMESPACE}
+                                %KUBECTL_PATH% create namespace %NAMESPACE% --dry-run=client -o yaml | %KUBECTL_PATH% apply -f -
+                                %KUBECTL_PATH% apply -f ${env.WORKSPACE}\\k8s\\persistent-volume.yaml -n %NAMESPACE%
+                                %KUBECTL_PATH% apply -f ${env.WORKSPACE}\\k8s\\persistent-volume-claim.yaml -n %NAMESPACE%
+                                %KUBECTL_PATH% apply -f ${env.WORKSPACE}\\k8s\\deployment.yaml -n %NAMESPACE%
+                                %KUBECTL_PATH% apply -f ${env.WORKSPACE}\\k8s\\service.yaml -n %NAMESPACE%
                             """
                         }
                     }
