@@ -7,7 +7,7 @@ pipeline {
         KUBECONFIG_PATH = '${kubeconfig}'
         TERRAFORM_EXEC_PATH = '${terraform-exec}'
         TERRAFORM_CONFIG_PATH = '${terraform-config}'
-        AWS_CLI_PATH = '${aws-cli}' // Ensure this is the correct environment variable name
+        AWS_CLI_PATH = '%aws-cli%' // Correctly referencing the environment variable for Windows
         KUBECTL_PATH = '${kubectl}' 
         AWS_PROFILE = '${aws-profile}'
         NAMESPACE = '${namespace}'
