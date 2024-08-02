@@ -1,14 +1,15 @@
+
 pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = 'mayaremam/library-management-system'
+        DOCKER_IMAGE = '${docker-image}'
         DOCKER_CREDENTIALS = 'dockerhub-credentials'
         KUBECONFIG_PATH = '${kubeconfig}'
         TERRAFORM_EXEC_PATH = '${terraform-exec}'
         TERRAFORM_CONFIG_PATH = '${terraform-config}'
-        AWS_CLI_PATH = 'C:\\Program Files\\Amazon\\AWSCLIV2\\aws.exe'
-        KUBECTL_PATH = '${kubectl}'
+        AWS_CLI_PATH = '${aws-cli}'
+        KUBECTL_PATH = '${kubectl}' 
         AWS_PROFILE = '${aws-profile}'
         NAMESPACE = '${namespace}'
     }
@@ -25,9 +26,9 @@ pipeline {
                     steps {
                         withCredentials([usernamePassword(credentialsId: 'aws-credentials', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
                             bat """
-                            "%AWS_CLI_PATH%" configure set aws_access_key_id %AWS_ACCESS_KEY_ID% --profile %AWS_PROFILE%
-                            "%AWS_CLI_PATH%" configure set aws_secret_access_key %AWS_SECRET_ACCESS_KEY% --profile %AWS_PROFILE%
-                            "%AWS_CLI_PATH%" configure set region us-east-1 --profile %AWS_PROFILE%
+                             env.AWS_CLI_PATH configure set aws_access_key_id %AWS_ACCESS_KEY_ID% --profile ${env.AWS_PROFILE}
+                             env.AWS_CLI_PATH configure set aws_secret_access_key %AWS_SECRET_ACCESS_KEY% --profile ${env.AWS_PROFILE}
+                             env.AWS_CLI_PATH configure set region us-east-1 --profile ${env.AWS_PROFILE}
                             """
                         }
                     }
@@ -50,9 +51,9 @@ pipeline {
                     steps {
                         dir("${env.TERRAFORM_CONFIG_PATH}") {
                             bat """
-                            set AWS_PROFILE=%AWS_PROFILE%
-                            "%TERRAFORM_EXEC_PATH%" init
-                            "%TERRAFORM_EXEC_PATH%" apply -auto-approve
+                            set AWS_PROFILE=${env.AWS_PROFILE}
+                            "${env.TERRAFORM_EXEC_PATH}" init
+                            "${env.TERRAFORM_EXEC_PATH}" apply -auto-approve
                             """
                         }
                     }
@@ -64,7 +65,7 @@ pipeline {
                             dir("${env.TERRAFORM_CONFIG_PATH}") {
                                 env.EKS_CLUSTER_NAME = bat(script: """
                                     @echo off
-                                    "%TERRAFORM_EXEC_PATH%" output -raw eks_cluster_name
+                                    "${env.TERRAFORM_EXEC_PATH}" output -raw eks_cluster_name
                                 """, returnStdout: true).trim()
                                 echo "EKS Cluster Name is set to ${env.EKS_CLUSTER_NAME}"
                             }
@@ -77,7 +78,7 @@ pipeline {
                         script {
                             echo "Configuring kubeconfig for EKS Cluster: ${env.EKS_CLUSTER_NAME}"
                             bat """
-                                "%AWS_CLI_PATH%" eks update-kubeconfig --region us-east-1 --name "${env.EKS_CLUSTER_NAME}" --kubeconfig "${env.KUBECONFIG_PATH}" --profile %AWS_PROFILE%
+                                "${env.AWS_CLI_PATH}" eks update-kubeconfig --region us-east-1 --name "${env.EKS_CLUSTER_NAME}" --kubeconfig "${env.KUBECONFIG_PATH}" --profile ${env.AWS_PROFILE}
                             """
                             env.KUBECONFIG = "${env.KUBECONFIG_PATH}"
                             echo "KUBECONFIG is set to ${env.KUBECONFIG}"
@@ -107,11 +108,11 @@ pipeline {
                         script {
                             echo "Deploying to Kubernetes namespace: ${env.NAMESPACE}"
                             bat """
-                                "%KUBECTL_PATH%" create namespace %NAMESPACE% --dry-run=client -o yaml | "%KUBECTL_PATH%" apply -f -
-                                "%KUBECTL_PATH%" apply -f ${env.WORKSPACE}\\k8s\\persistent-volume.yaml -n %NAMESPACE%
-                                "%KUBECTL_PATH%" apply -f ${env.WORKSPACE}\\k8s\\persistent-volume-claim.yaml -n %NAMESPACE%
-                                "%KUBECTL_PATH%" apply -f ${env.WORKSPACE}\\k8s\\deployment.yaml -n %NAMESPACE%
-                                "%KUBECTL_PATH%" apply -f ${env.WORKSPACE}\\k8s\\service.yaml -n %NAMESPACE%
+                                "${env.KUBECTL_PATH}" create namespace ${env.NAMESPACE} --dry-run=client -o yaml | "${env.KUBECTL_PATH}" apply -f -
+                                "${env.KUBECTL_PATH}" apply -f ${env.WORKSPACE}\\k8s\\persistent-volume.yaml -n ${env.NAMESPACE}
+                                "${env.KUBECTL_PATH}" apply -f ${env.WORKSPACE}\\k8s\\persistent-volume-claim.yaml -n ${env.NAMESPACE}
+                                "${env.KUBECTL_PATH}" apply -f ${env.WORKSPACE}\\k8s\\deployment.yaml -n ${env.NAMESPACE}
+                                "${env.KUBECTL_PATH}" apply -f ${env.WORKSPACE}\\k8s\\service.yaml -n ${env.NAMESPACE}
                             """
                         }
                     }
