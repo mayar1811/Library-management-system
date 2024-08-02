@@ -1,3 +1,4 @@
+
 pipeline {
     agent any
 
@@ -110,4 +111,25 @@ pipeline {
                                 "${env.KUBECTL_PATH}" create namespace ${env.NAMESPACE} --dry-run=client -o yaml | "${env.KUBECTL_PATH}" apply -f -
                                 "${env.KUBECTL_PATH}" apply -f ${env.WORKSPACE}\\k8s\\persistent-volume.yaml -n ${env.NAMESPACE}
                                 "${env.KUBECTL_PATH}" apply -f ${env.WORKSPACE}\\k8s\\persistent-volume-claim.yaml -n ${env.NAMESPACE}
-                                "${env.KUBECTL_PATH}" apply -f ${env.WORKSPACE}\\k8s\\
+                                "${env.KUBECTL_PATH}" apply -f ${env.WORKSPACE}\\k8s\\deployment.yaml -n ${env.NAMESPACE}
+                                "${env.KUBECTL_PATH}" apply -f ${env.WORKSPACE}\\k8s\\service.yaml -n ${env.NAMESPACE}
+                            """
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'CI/CD pipeline completed successfully.'
+        }
+        failure {
+            echo 'CI/CD pipeline failed.'
+        }
+        always {
+            echo 'Cleaning up...'
+        }
+    }
+}
