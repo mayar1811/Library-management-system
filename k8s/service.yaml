@@ -4,12 +4,10 @@ metadata:
   name: library-app-service
   namespace: team6
 spec:
-  type: NodePort
+  type: LoadBalancer
   selector:
     app: library-app
   ports:
     - protocol: TCP
-      port: 80
-      targetPort: 5000
-      nodePort: 30005  
-
+      port: 80       
+      targetPort: 5000 
