@@ -117,6 +117,21 @@ pipeline {
                         }
                     }
                 }
+
+                stage('Deploy Prometheus and Grafana') {
+                    steps {
+                        script {
+                            echo "Deploying Prometheus and Grafana to Kubernetes namespace: ${NAMESPACE}"
+                            bat """
+                                "${env.KUBECTL_PATH}" apply -f ${env.WORKSPACE}\\k8s\\prometheus-deployment.yaml -n ${NAMESPACE}
+                                "${env.KUBECTL_PATH}" apply -f ${env.WORKSPACE}\\k8s\\grafana-deployment.yaml -n ${NAMESPACE}
+                                "${env.KUBECTL_PATH}" apply -f ${env.WORKSPACE}\\k8s\\prometheus-configmap.yaml -n ${NAMESPACE}
+                                "${env.KUBECTL_PATH}" apply -f ${env.WORKSPACE}\\k8s\\grafana-service.yaml -n ${NAMESPACE}
+                                "${env.KUBECTL_PATH}" apply -f ${env.WORKSPACE}\\k8s\\prometheus-service.yaml -n ${NAMESPACE}
+                            """
+                        }
+                    }
+                }
             }
         }
     }
