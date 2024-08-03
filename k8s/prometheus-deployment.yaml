@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: library-app-prometheus-deployment
+  namespace: team6
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: library-app-prometheus
+  template:
+    metadata:
+      labels:
+        app: library-app-prometheus
+    spec:
+      containers:
+      - name: library-app-prometheus
+        image: mayaremam/library_app:latest 
+        ports:
+        - containerPort: 9090
+        volumeMounts:
+        - name: prometheus-config
+          mountPath: /etc/prometheus
+          readOnly: true
+      volumes:
+      - name: prometheus-config
+        configMap:
+          name: prometheus-config
