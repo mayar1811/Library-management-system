@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: library-app-prometheus-config
+  name: prometheus-config
   namespace: team6
 data:
   prometheus.yml: |
