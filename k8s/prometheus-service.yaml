@@ -4,8 +4,10 @@ metadata:
   name: library-app-service-prometheus
   namespace: team6
 spec:
+  type: LoadBalancer
   ports:
   - port: 9090
     targetPort: 9090
   selector:
     app: library-app-prometheus
+
