@@ -4,8 +4,10 @@ metadata:
   name: library-app-grafana-service
   namespace: team6
 spec:
+  type: LoadBalancer
   ports:
-  - port: 3000
-    targetPort: 3000
+    - port: 3000
+      targetPort: 3000
   selector:
     app: library-app-grafana
+
