@@ -3,7 +3,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = 'mayaremam/library-management-system'
+        DOCKER_IMAGE = 'mayaremam/library_management_system_flask'
         DOCKER_CREDENTIALS = 'dockerhub-credentials'
         KUBECONFIG_PATH = 'C:\\Users\\Dell\\.kube\\config'
         TERRAFORM_EXEC_PATH = 'C:\\terraform\\terraform_1.9.3_windows_amd64\\terraform.exe'
@@ -113,21 +113,6 @@ pipeline {
                                 "${env.KUBECTL_PATH}" apply -f ${env.WORKSPACE}\\k8s\\persistent-volume-claim.yaml -n ${NAMESPACE}
                                 "${env.KUBECTL_PATH}" apply -f ${env.WORKSPACE}\\k8s\\deployment.yaml -n ${NAMESPACE}
                                 "${env.KUBECTL_PATH}" apply -f ${env.WORKSPACE}\\k8s\\service.yaml -n ${NAMESPACE}
-                            """
-                        }
-                    }
-                }
-
-                stage('Deploy Prometheus and Grafana') {
-                    steps {
-                        script {
-                            echo "Deploying Prometheus and Grafana to Kubernetes namespace: ${NAMESPACE}"
-                            bat """
-                                "${env.KUBECTL_PATH}" apply -f ${env.WORKSPACE}\\k8s\\prometheus-deployment.yaml -n ${NAMESPACE}
-                                "${env.KUBECTL_PATH}" apply -f ${env.WORKSPACE}\\k8s\\grafana-deployment.yaml -n ${NAMESPACE}
-                                "${env.KUBECTL_PATH}" apply -f ${env.WORKSPACE}\\k8s\\prometheus-configmap.yaml -n ${NAMESPACE}
-                                "${env.KUBECTL_PATH}" apply -f ${env.WORKSPACE}\\k8s\\grafana-service.yaml -n ${NAMESPACE}
-                                "${env.KUBECTL_PATH}" apply -f ${env.WORKSPACE}\\k8s\\prometheus-service.yaml -n ${NAMESPACE}
                             """
                         }
                     }
