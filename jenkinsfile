@@ -2,6 +2,7 @@
 pipeline {
     agent any
 
+// Define environment variables for Docker, Kubernetes, and AWS CLI paths, credentials, and configurations
     environment {
         DOCKER_IMAGE = 'mayaremam/library_management_system_flask'
         DOCKER_CREDENTIALS = 'dockerhub-credentials'
@@ -15,6 +16,7 @@ pipeline {
     }
 
     options {
+	// Set a timeout for the entire pipeline and keep only the last 10 builds
         timeout(time: 1, unit: 'HOURS')
         buildDiscarder(logRotator(numToKeepStr: '10'))
     }
@@ -24,6 +26,7 @@ pipeline {
             stages {
                 stage('Setup AWS CLI') {
                     steps {
+			// Configure AWS CLI with credentials and region
                         withCredentials([usernamePassword(credentialsId: 'aws-credentials', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
                             bat """
                             "${env.AWS_CLI_PATH}" configure set aws_access_key_id %AWS_ACCESS_KEY_ID% --profile ${env.AWS_PROFILE}
@@ -37,6 +40,7 @@ pipeline {
                 stage('Build Docker Image') {
                     steps {
                         script {
+			    // Build the Docker image using the specified image name and build number
                             echo "Building Docker image ${DOCKER_IMAGE}:${env.BUILD_NUMBER}"
                             bat "docker build -t ${DOCKER_IMAGE}:${env.BUILD_NUMBER} ."
                         }
@@ -49,6 +53,7 @@ pipeline {
             stages {
                 stage('Terraform Init and Apply') {
                     steps {
+			// Initialize and apply Terraform configuration to provision AWS resources
                         dir("${env.TERRAFORM_CONFIG_PATH}") {
                             bat """
                             set AWS_PROFILE=${env.AWS_PROFILE}
@@ -62,6 +67,7 @@ pipeline {
                 stage('Extract EKS Cluster Name') {
                     steps {
                         script {
+			    // Extract the EKS cluster name from Terraform output
                             dir("${env.TERRAFORM_CONFIG_PATH}") {
                                 env.EKS_CLUSTER_NAME = bat(script: """
                                     @echo off
@@ -76,8 +82,10 @@ pipeline {
                 stage('Configure Kubeconfig') {
                     steps {
                         script {
+			    // Configure kubeconfig to use the extracted EKS cluster name
                             echo "Configuring kubeconfig for EKS Cluster: ${env.EKS_CLUSTER_NAME}"
                             bat """
+				 // This allows kubectl to interact with the EKS cluster
                                 "${env.AWS_CLI_PATH}" eks update-kubeconfig --region us-east-1 --name "${env.EKS_CLUSTER_NAME}" --kubeconfig "${env.KUBECONFIG_PATH}" --profile MayarHossam
                             """
                             env.KUBECONFIG = "${env.KUBECONFIG_PATH}"
@@ -88,6 +96,7 @@ pipeline {
 
                 stage('Push Docker Image') {
                     steps {
+			// Push the built Docker image to Docker Hub
                         script {
                             echo "Pushing Docker image ${DOCKER_IMAGE}:${env.BUILD_NUMBER}"
                             withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
@@ -105,10 +114,13 @@ pipeline {
 
                 stage('Deploy to Kubernetes') {
                     steps {
+			// Deploy the Dockerized application to the Kubernetes cluster
                         script {
                             echo "Deploying to Kubernetes namespace: ${NAMESPACE}"
                             bat """
+				// Create namespace if it does not exist
                                 "${env.KUBECTL_PATH}" create namespace ${NAMESPACE} --dry-run=client -o yaml | "${env.KUBECTL_PATH}" apply -f -
+				//Apply the Persistent Volume configuration,Persistent Volume Claim configuration,Deployment configuration,and Service configuration
                                 "${env.KUBECTL_PATH}" apply -f ${env.WORKSPACE}\\k8s\\persistent-volume.yaml -n ${NAMESPACE}
                                 "${env.KUBECTL_PATH}" apply -f ${env.WORKSPACE}\\k8s\\persistent-volume-claim.yaml -n ${NAMESPACE}
                                 "${env.KUBECTL_PATH}" apply -f ${env.WORKSPACE}\\k8s\\deployment.yaml -n ${NAMESPACE}
@@ -120,14 +132,17 @@ pipeline {
             }
         }
     }
-
+     // Post actions for success, failure, and always
     post {
+	//if the pipeline succeeded it will say 'CI/CD pipeline completed successfully.'
         success {
             echo 'CI/CD pipeline completed successfully.'
         }
+	//if the pipeline failed it will say 'CI/CD pipeline failed.'
         failure {
             echo 'CI/CD pipeline failed.'
         }
+	//will always say "Cleaning up.." regardless of the state of the pipeline
         always {
             echo 'Cleaning up...'
         }
