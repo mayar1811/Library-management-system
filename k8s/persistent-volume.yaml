@@ -1,14 +1,18 @@
 apiVersion: v1
+#Type of resource 
 kind: PersistentVolume
+#The name and its namespace 
 metadata:
   name: library-app-pv
   namespace: team6
 spec:
   capacity:
-    storage: 4Gi
+  #The amount of storage available
+    storage: 4Gi 
+  #The volume mode
   accessModes:
     - ReadWriteOnce
   hostPath:
-    path: /instance 
+    path: /instance  # The path of the host file  
 
 

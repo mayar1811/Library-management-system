@@ -1,12 +1,16 @@
 apiVersion: v1
+#Type of resource
 kind: Service
+#Name and namespace
 metadata:
   name: library-app-service
   namespace: team6
 spec:
+#Specifies the type of service 
   type: LoadBalancer
   selector:
     app: library-app
+  # Specifies the ports that the Service will expose
   ports:
     - protocol: TCP
       port: 80       
