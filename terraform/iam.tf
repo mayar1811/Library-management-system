@@ -1,54 +1,78 @@
-# Create an IAM role for the EKS cluster
+# IAM Role for EKS Cluster
 resource "aws_iam_role" "eks_cluster_role" {
-  name = "${var.resource_prefix}_eks_cluster_role"  # Name of the IAM role
+  name = "${var.resource_prefix}_eks_cluster_role"
 
-  # Policy that allows EKS to assume this role
+  # Policy that allows the EKS service and specific IAM users to assume this role
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
+        Action = "sts:AssumeRole",
+        Effect = "Allow",
         Principal = {
-          Service = "eks.amazonaws.com"  # EKS service is allowed to assume this role
+          Service = "eks.amazonaws.com"
+        }
+      },
+      {
+        Action = "sts:AssumeRole",
+        Effect = "Allow",
+        Principal = {
+          AWS = [
+            "arn:aws:iam::637423483309:user/Nour",
+            "arn:aws:iam::637423483309:user/MayarHossam",
+            "arn:aws:iam::637423483309:user/ibrahmed",
+            "arn:aws:iam::637423483309:user/AhmedHazem",
+          ]
         }
       },
     ]
   })
 
-  # Attach managed policies to the role
+  # Managed policies attached to the EKS cluster role
   managed_policy_arns = [
-    "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy",  # Allows EKS cluster management
-    "arn:aws:iam::aws:policy/AmazonEKSServicePolicy",   # Allows EKS service operations
-    "arn:aws:iam::aws:policy/AmazonEKSVPCResourceController",  # Manages VPC resources for EKS
-    "arn:aws:iam::aws:policy/AdministratorAccess"  # Provides administrative access
+    "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy",        # Provides permissions to manage EKS clusters
+    "arn:aws:iam::aws:policy/AmazonEKSServicePolicy",        # Provides permissions for EKS service operations
+    "arn:aws:iam::aws:policy/AmazonEKSVPCResourceController", # Provides permissions to manage VPC resources
+    "arn:aws:iam::aws:policy/AdministratorAccess"             # Provides full administrative access
   ]
 }
 
-# Create an IAM role for EKS worker nodes (EC2 instances)
+# IAM Role for EKS Worker Nodes
 resource "aws_iam_role" "eks_nodes_role" {
-  name = "${var.resource_prefix}_eks_node_role"  # Name of the IAM role
+  name = "${var.resource_prefix}_eks_node_role"
 
-  # Policy that allows EC2 instances to assume this role
+  # Policy that allows EC2 instances and specific IAM users to assume this role
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
+        Action = "sts:AssumeRole",
+        Effect = "Allow",
         Principal = {
-          Service = "ec2.amazonaws.com"  # EC2 service is allowed to assume this role
+          Service = "ec2.amazonaws.com"
+        }
+      },
+      {
+        Action = "sts:AssumeRole",
+        Effect = "Allow",
+        Principal = {
+          AWS = [
+            "arn:aws:iam::637423483309:user/Nour",
+            "arn:aws:iam::637423483309:user/MayarHossam",
+            "arn:aws:iam::637423483309:user/ibrahmed",
+            "arn:aws:iam::637423483309:user/AhmedHazem",
+          ]
         }
       },
     ]
   })
 
-  # Attach managed policies to the role
+  # Managed policies attached to the EKS worker nodes role
   managed_policy_arns = [
-    "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy",  # Allows worker nodes to interact with the EKS cluster
-    "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy",       # Allows EKS CNI plugin to manage networking
-    "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly",  # Allows read-only access to ECR
-    "arn:aws:iam::aws:policy/AmazonEC2FullAccess",  # Provides full access to EC2
-    "arn:aws:iam::aws:policy/AdministratorAccess"  # Provides administrative access
+    "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy",     # Provides permissions for EKS worker nodes
+    "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy",         # Provides permissions for the Amazon VPC CNI plugin
+    "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly", # Provides read-only access to ECR
+    "arn:aws:iam::aws:policy/AmazonEC2FullAccess",          # Provides full access to EC2 resources
+    "arn:aws:iam::aws:policy/AdministratorAccess"            # Provides full administrative access
   ]
 }
